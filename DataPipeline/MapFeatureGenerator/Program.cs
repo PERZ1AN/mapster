@@ -10,6 +10,8 @@ using OSMDataParser.Elements;
 
 namespace MapFeatureGenerator;
 
+
+
 public static class Program
 {
     private static MapData LoadOsmFile(ReadOnlySpan<char> osmFilePath)
@@ -115,8 +117,8 @@ public static class Program
                 {
                     Id = featureId,
                     Coordinates = (totalCoordinateCount, new List<Coordinate>()),
-                    PropertyKeys = (totalPropertyCount, new List<string>(way.Tags.Count)),
-                    PropertyValues = (totalPropertyCount, new List<string>(way.Tags.Count))
+                    PropertyKeys = (totalPropertyCount, new List<EPropertyKeys>(way.Tags.Count)),
+                    PropertyValues = (totalPropertyCount, new List<EPropertyValues>(way.Tags.Count))
                 };
 
                 var geometryType = GeometryType.Polyline;
@@ -128,8 +130,9 @@ public static class Program
                     {
                         labels[^1] = totalPropertyCount * 2 + featureData.PropertyKeys.keys.Count * 2 + 1;
                     }
-                    featureData.PropertyKeys.keys.Add(tag.Key);
-                    featureData.PropertyValues.values.Add(tag.Value);
+                    
+                    featureData.PropertyKeys.keys.Add(EPKTranslator.translate(tag.Key));
+                    featureData.PropertyValues.values.Add(EPVTranslator.translate(tag.Value));
                 }
 
                 foreach (var nodeId in way.NodeIds)
@@ -144,10 +147,10 @@ public static class Program
 
                     foreach (var (key, value) in node.Tags)
                     {
-                        if (!featureData.PropertyKeys.keys.Contains(key))
+                        if (!featureData.PropertyKeys.keys.Contains(EPKTranslator.translate(key)))
                         {
-                            featureData.PropertyKeys.keys.Add(key);
-                            featureData.PropertyValues.values.Add(value);
+                            featureData.PropertyKeys.keys.Add(EPKTranslator.translate(key));
+                            featureData.PropertyValues.values.Add(EPVTranslator.translate(value));
                         }
                     }
 
@@ -189,8 +192,8 @@ public static class Program
 
                 var featureId = Interlocked.Increment(ref featureIdCounter);
 
-                var featurePropKeys = new List<string>();
-                var featurePropValues = new List<string>();
+                var featurePropKeys = new List<EPropertyKeys>();
+                var featurePropValues = new List<EPropertyValues>();
 
                 labels.Add(-1);
                 for (var i = 0; i < node.Tags.Count; ++i)
@@ -201,8 +204,8 @@ public static class Program
                         labels[^1] = totalPropertyCount * 2 + featurePropKeys.Count * 2 + 1;
                     }
 
-                    featurePropKeys.Add(tag.Key);
-                    featurePropValues.Add(tag.Value);
+                    featurePropKeys.Add(EPKTranslator.translate(tag.Key));
+                    featurePropValues.Add(EPVTranslator.translate(tag.Value));
                 }
 
                 if (featurePropKeys.Count != featurePropValues.Count)
@@ -293,22 +296,20 @@ public static class Program
             // And seek forward to continue updating the file
             fileWriter.BaseStream.Position = currentPosition;
 
-            var stringOffset = 0;
+            //var stringOffset = 0;
             foreach (var t in featureIds)
             {
                 var featureData = featuresData[t];
                 for (var i = 0; i < featureData.PropertyKeys.keys.Count; ++i)
                 {
-                    ReadOnlySpan<char> k = featureData.PropertyKeys.keys[i];
-                    ReadOnlySpan<char> v = featureData.PropertyValues.values[i];
+                    EPropertyKeys k = featureData.PropertyKeys.keys[i];
+                    EPropertyValues v = featureData.PropertyValues.values[i];
 
-                    fileWriter.Write(stringOffset); // StringEntry: Offset
-                    fileWriter.Write(k.Length); // StringEntry: Length
-                    stringOffset += k.Length;
+                    //fileWriter.Write(stringOffset); // StringEntry: Offset
+                    fileWriter.Write((int)k);
 
-                    fileWriter.Write(stringOffset); // StringEntry: Offset
-                    fileWriter.Write(v.Length); // StringEntry: Length
-                    stringOffset += v.Length;
+
+                    fileWriter.Write((int)v);
                 }
             }
 
@@ -325,17 +326,14 @@ public static class Program
                 var featureData = featuresData[t];
                 for (var i = 0; i < featureData.PropertyKeys.keys.Count; ++i)
                 {
-                    ReadOnlySpan<char> k = featureData.PropertyKeys.keys[i];
-                    foreach (var c in k)
-                    {
-                        fileWriter.Write((short)c);
-                    }
+                    EPropertyKeys k = featureData.PropertyKeys.keys[i];
+                    EPropertyValues v = featureData.PropertyValues.values[i];
 
-                    ReadOnlySpan<char> v = featureData.PropertyValues.values[i];
-                    foreach (var c in v)
-                    {
-                        fileWriter.Write((short)c);
-                    }
+                    //fileWriter.Write(stringOffset); // StringEntry: Offset
+                    fileWriter.Write((int)k);
+
+
+                    fileWriter.Write((int)v);
                 }
             }
         }
@@ -388,7 +386,7 @@ public static class Program
 
         public byte GeometryType { get; set; }
         public (int offset, List<Coordinate> coordinates) Coordinates { get; init; }
-        public (int offset, List<string> keys) PropertyKeys { get; init; }
-        public (int offset, List<string> values) PropertyValues { get; init; }
+        public (int offset, List<EPropertyKeys> keys) PropertyKeys { get; init; }
+        public (int offset, List<EPropertyValues> values) PropertyValues { get; init; }
     }
 }
