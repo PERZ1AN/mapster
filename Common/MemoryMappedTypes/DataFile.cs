@@ -196,7 +196,7 @@ public unsafe class DataFile : IDisposable
                     for (var p = 0; p < feature->PropertyCount; ++p)
                     {
                         GetProperty(header.Tile.Value.StringsOffsetInBytes, header.Tile.Value.CharactersOffsetInBytes, p * 2 + feature->PropertiesOffset, out var key, out var value);
-                        if (!properties.ContainsKey(key))
+                        if (!properties.ContainsKey(key)) // this hopefully allows testing with incomplete Enums
                         properties.Add(key, value);
 
                     }
