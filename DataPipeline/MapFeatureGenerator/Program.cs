@@ -306,12 +306,10 @@ public static class Program
                     EPropertyValues v = featureData.PropertyValues.values[i];
 
                     fileWriter.Write(stringOffset);
-                    Console.WriteLine($"VALUE: {(int)k}\n");
                     fileWriter.Write(sizeof(int));
                     stringOffset += sizeof(int);
 
                     fileWriter.Write(stringOffset);
-                    Console.WriteLine($"VALUE: {(int)v}\n");
                     fileWriter.Write(sizeof(int));
                     stringOffset += sizeof(int);
                 }
@@ -336,7 +334,6 @@ public static class Program
                     fileWriter.Write((int)k);
 
                     fileWriter.Write((int)v);
-                    Console.WriteLine($"Key: {(int)k}  VALUE: {(int)v}\n");
                 }
             }
         }

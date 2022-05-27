@@ -137,7 +137,6 @@ public unsafe class DataFile : IDisposable
         string VString = VChar.ToString();
         int.TryParse(VString, out int valueT);
         value = valueT;
-        Console.WriteLine($"VALUE: {value}\n");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -197,6 +196,7 @@ public unsafe class DataFile : IDisposable
                     for (var p = 0; p < feature->PropertyCount; ++p)
                     {
                         GetProperty(header.Tile.Value.StringsOffsetInBytes, header.Tile.Value.CharactersOffsetInBytes, p * 2 + feature->PropertiesOffset, out var key, out var value);
+                        if (!properties.ContainsKey(key))
                         properties.Add(key, value);
 
                     }
