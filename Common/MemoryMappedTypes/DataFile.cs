@@ -130,16 +130,28 @@ public unsafe class DataFile : IDisposable
         value = new ReadOnlySpan<char>(_ptr + charsOffset + stringEntry->Offset * 2, stringEntry->Length);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private void GetProperty(ulong stringsOffset, ulong charsOffset, int i, out ReadOnlySpan<char> key, out ReadOnlySpan<char> value)
+    private void GetEnum(ulong stringsOffset, ulong charsOffset, int i, out int value)
     {
+        var stringEntry = (StringEntry*)(_ptr + stringsOffset + i * StringEntrySizeInBytes);
+        ReadOnlySpan<char> VChar = new ReadOnlySpan<char>(_ptr + charsOffset + stringEntry->Offset * 2, stringEntry->Length);
+        string VString = VChar.ToString();
+        int.TryParse(VString, out int valueT);
+        value = valueT;
+        Console.WriteLine($"VALUE: {value}\n");
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private void GetProperty(ulong stringsOffset, ulong charsOffset, int i, out EPropertyKeys EKey, out EPropertyValues EValue)
+    {
+        int key, value;
         if (i % 2 != 0)
         {
             throw new ArgumentException("Properties are key-value pairs and start at even indices in the string list (i.e. i % 2 == 0)");
         }
-
-        GetString(stringsOffset, charsOffset, i, out key);
-        GetString(stringsOffset, charsOffset, i + 1, out value);
+        GetEnum(stringsOffset, charsOffset, i, out key);
+        GetEnum(stringsOffset, charsOffset, i + 1, out value);
+        EKey = (EPropertyKeys)key;
+        EValue = (EPropertyValues)value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -186,6 +198,7 @@ public unsafe class DataFile : IDisposable
                     {
                         GetProperty(header.Tile.Value.StringsOffsetInBytes, header.Tile.Value.CharactersOffsetInBytes, p * 2 + feature->PropertiesOffset, out var key, out var value);
                         properties.Add(key, value);
+
                     }
 
                     if (!action(new MapFeatureData

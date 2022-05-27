@@ -296,7 +296,7 @@ public static class Program
             // And seek forward to continue updating the file
             fileWriter.BaseStream.Position = currentPosition;
 
-            //var stringOffset = 0;
+            var stringOffset = 0;
             foreach (var t in featureIds)
             {
                 var featureData = featuresData[t];
@@ -305,11 +305,15 @@ public static class Program
                     EPropertyKeys k = featureData.PropertyKeys.keys[i];
                     EPropertyValues v = featureData.PropertyValues.values[i];
 
-                    //fileWriter.Write(stringOffset); // StringEntry: Offset
-                    fileWriter.Write((int)k);
+                    fileWriter.Write(stringOffset);
+                    Console.WriteLine($"VALUE: {(int)k}\n");
+                    fileWriter.Write(sizeof(int));
+                    stringOffset += sizeof(int);
 
-
-                    fileWriter.Write((int)v);
+                    fileWriter.Write(stringOffset);
+                    Console.WriteLine($"VALUE: {(int)v}\n");
+                    fileWriter.Write(sizeof(int));
+                    stringOffset += sizeof(int);
                 }
             }
 
@@ -329,11 +333,10 @@ public static class Program
                     EPropertyKeys k = featureData.PropertyKeys.keys[i];
                     EPropertyValues v = featureData.PropertyValues.values[i];
 
-                    //fileWriter.Write(stringOffset); // StringEntry: Offset
                     fileWriter.Write((int)k);
 
-
                     fileWriter.Write((int)v);
+                    Console.WriteLine($"Key: {(int)k}  VALUE: {(int)v}\n");
                 }
             }
         }
